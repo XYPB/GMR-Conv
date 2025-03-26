@@ -4,11 +4,9 @@ from glob import glob
 import builtins
 import shutil
 import time
-from collections import Counter
 from pytz import timezone
 from datetime import datetime
 import json
-from functools import partial
 import copy
 import wandb
 
@@ -24,9 +22,6 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 import torchvision
 from torch.optim.lr_scheduler import LambdaLR, StepLR, MultiStepLR, CosineAnnealingLR
 from cosine_annealing_warmup import CosineAnnealingWarmupRestarts
-from torchsummary import summary
-import medmnist
-from medmnist import INFO
 from sklearn.metrics import (
     roc_auc_score,
     accuracy_score,
