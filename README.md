@@ -14,7 +14,7 @@ For any question related to the implementation, please open issue in this repo, 
 
 ## News
 
-- **Jan. 2025** Our paper is now available on [arXiv](https://arxiv.org/abs/2501.09753)!
+- **Match. 2025** Our paper is now available on [arXiv](https://arxiv.org/abs/2501.09753)!
 
 ## Abstract
 
