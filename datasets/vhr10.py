@@ -1,7 +1,6 @@
 import os
 import json
 import torch
-import numpy as np
 from glob import glob
 from PIL import Image
 import random

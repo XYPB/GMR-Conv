@@ -417,7 +417,7 @@ class GMRUNet(nn.Module):
         interp_mode: str = "linear",
         dimensions: Optional[int] = None,
         kernels: Sequence[int] = (9, 9, 5, 5, 3),
-        use_gmr: bool = False,
+        use_gmr: bool = True,
         force_circular: bool = False,
         gaussian_smooth: bool = False,
         layers: int = 4,

@@ -1,6 +1,6 @@
 import argparse
 
-parser = argparse.ArgumentParser(description="PyTorch MNIST Example")
+parser = argparse.ArgumentParser(description="PyTorch GMR-Conv Training")
 # Training settings
 parser.add_argument(
     "-b",
@@ -36,9 +36,9 @@ parser.add_argument(
 parser.add_argument(
     "--num-workers",
     type=int,
-    default=8,
+    default=4,
     metavar="NW",
-    help="number of workers (default: 8)",
+    help="number of workers (default: 4)",
 )
 parser.add_argument(
     "--gamma",
@@ -57,9 +57,6 @@ parser.add_argument(
     "--dry-run", action="store_true", default=False, help="quickly check a single pass"
 )
 parser.add_argument(
-    "--eval-only", action="store_true", default=False, help="quickly evaluate the model"
-)
-parser.add_argument(
     "--adam", action="store_true", default=False, help="using adam optim"
 )
 parser.add_argument(
@@ -70,10 +67,13 @@ parser.add_argument(
     "--cos", action="store_true", default=False, help="using cosine scheduler"
 )
 parser.add_argument(
+    "--warm-up", type=int, default=-1, help="using cosine scheduler with warm up"
+)
+parser.add_argument(
     "--step", action="store_true", default=False, help="using step scheduler"
 )
 parser.add_argument(
-    "--step_scheduler-size",
+    "--step-scheduler-size",
     type=int,
     default=1,
     help="step size for step scheduler (default: 1)",
@@ -88,23 +88,24 @@ parser.add_argument(
     "--seed", type=int, default=1, metavar="S", help="random seed (default: 1)"
 )
 parser.add_argument(
-    "--test-batch-size",
-    type=int,
-    default=1000,
-    metavar="N",
-    help="input batch size for testing (default: 1000)",
-)
-parser.add_argument(
-    "--model-type", type=str, default="conv", help="which kind of model to use"
-)
-parser.add_argument(
     "--cudnn",
     action="store_true",
     default=False,
     help="use cudnn benchmark to speed up the training",
 )
 parser.add_argument("--dev", action="store_true", default=False, help="debug mode")
-parser.add_argument("--log-img", action="store_true", default=False, help="log images")
+parser.add_argument(
+    "--ddp", action="store_true", default=False, help="use DDP training"
+)
+parser.add_argument(
+    "--world-size", type=int, default=1, help="world size for ddp training"
+)
+parser.add_argument(
+    "--dist-url",
+    type=str,
+    default="tcp://localhost:10001",
+    help="communication url for ddp training",
+)
 parser.add_argument(
     "--amp", action="store_true", default=False, help="use AMP training"
 )
@@ -115,13 +116,10 @@ parser.add_argument(
     "--bf16", action="store_true", default=False, help="use bfloat16 for training"
 )
 parser.add_argument(
-    '--ddp', action='store_true', default=False, help='use DDP training'
+    "--label-smoothing", type=float, default=-1, help="soften the labels"
 )
 parser.add_argument(
-    '--world-size', type=int, default=1, help='world size for ddp training'
-)
-parser.add_argument(
-    '--dist-url', type=str, default='tcp://localhost:10001', help='communication url for ddp training'
+    "--eval-only", action="store_true", default=False, help="evaluate the model"
 )
 
 # Log settings
@@ -172,12 +170,6 @@ parser.add_argument(
 parser.add_argument("--load-model", type=str, default="", help="load pre-trained model")
 parser.add_argument(
     "--resume", type=str, default="", help="resume from previous training"
-)
-parser.add_argument(
-    "--cur-ep", type=int, default=None, help="epoch of previous training"
-)
-parser.add_argument(
-    "--wandb", action="store_true", default=False, help="use wandb for logging"
 )
 
 
@@ -243,6 +235,12 @@ parser.add_argument(
     help="evaluate the model with flipping",
 )
 parser.add_argument(
+    "--eval-rot",
+    action="store_true",
+    default=False,
+    help="Evaluate trained model on different rotation degrees",
+)
+parser.add_argument(
     "--eval-interval", type=int, default=1000, help="interval of specific evaluation"
 )
 parser.add_argument(
@@ -287,23 +285,31 @@ parser.add_argument(
 parser.add_argument(
     "--interpolation",
     type=str,
-    default="nearest",
+    default="bilinear",
     help="interpolation method for rotation: nearest | bilinear | bicubic",
 )
 
-
-# GMR conv settings
+# Model settings
 parser.add_argument(
-    "--gmr-shape", type=str, default="o", help="shape of the RI conv kernel"
+    "--model-type", type=str, default="gmr_resnet18", help="which kind of model to use"
 )
 parser.add_argument(
-    "--gmr-conv-size", type=int, default=3, help="size of the RI convolution kernel"
+    "--gmr-conv-size", 
+    type=int, 
+    default=3, 
+    help="size of the GMR convolution kernel"
 )
 parser.add_argument(
-    "--gmr-conv-k",
+    "--num-rings",
     nargs="+",
     default=None,
-    help="# of layers of the RI convolution kernel",
+    help="# of rings of the GMR convolution kernel",
+)
+parser.add_argument(
+    "--gmr-conv-size-list",
+    nargs="+",
+    default=None,
+    help="Size of each gmr conv kernel",
 )
 parser.add_argument(
     "--res-inplanes",
@@ -318,55 +324,92 @@ parser.add_argument(
     help="Not to down sample for resnet Conv1",
 )
 
-# Model settings
+# CIFAR-10 args
 parser.add_argument(
-    "--dropout-p", type=float, default=-1, help="probability of dropout layers"
-)
-parser.add_argument(
-    "--large-conv",
+    "--cifar10",
     action="store_true",
     default=False,
-    help="Use 7x7 convolution layers",
-)
-parser.add_argument(
-    "--maxpool", action="store_true", default=False, help="use max pooling"
+    help="indicate the Cifar-10 dataset to be used",
 )
 
 
-# MedMNIST args
+# CIFAR-100 args
 parser.add_argument(
-    "--gmr-conv-size-list",
-    nargs="+",
-    default=None,
-    help="Size of each MNIST ri conv kernel",
-)
-parser.add_argument(
-    "--eval-rot",
+    "--cifar100",
     action="store_true",
     default=False,
-    help="Evaluate trained model on different rotation degrees",
+    help="indicate the Cifar-100 dataset to be used",
 )
+
+# VHR10 args
 parser.add_argument(
-    "--med-mnist", type=str, default="", help="indicate the medMNIST dataset to be used"
-)
-parser.add_argument(
-    "--no-aug", action="store_true", default=False, help="Train w/o augmentation"
-)
-parser.add_argument(
-    "--multi-label",
+    "--vhr10",
     action="store_true",
     default=False,
-    help="Train with multi-label loss",
+    help="indicate the VHR-10 dataset to be used",
+)
+
+# MTARSI args
+parser.add_argument(
+    "--mtarsi",
+    action="store_true",
+    default=False,
+    help="indicate the MTARSI-1 dataset to be used",
+)
+
+
+# ImageNet args
+parser.add_argument(
+    "--imagenet",
+    action="store_true",
+    default=False,
+    help="indicate the ImageNet dataset to be used",
 )
 parser.add_argument(
-    "--medmnist-size", type=int, default=28, help="Size of MedMNIST image"
+    "--random-erase",
+    action="store_true",
+    default=False,
+    help="use random erase augmentation",
 )
+
+# NCT-CRC args
+parser.add_argument(
+    "--nct-crc",
+    action="store_true",
+    default=False,
+    help="indicate the NCT-CRC dataset to be used",
+)
+
+# PCam args
+parser.add_argument(
+    "--pcam",
+    action="store_true",
+    default=False,
+    help="indicate the PatchCamelyon dataset to be used",
+)
+
+# ModelNet10 args
+parser.add_argument(
+    "--modelnet10",
+    action="store_true",
+    default=False,
+    help="indicate the ModelNet10 dataset to be used",
+)
+
+# ModelNet40 args
+parser.add_argument(
+    "--modelnet40",
+    action="store_true",
+    default=False,
+    help="indicate the ModelNet40 dataset to be used",
+)
+
 
 
 def get_opt():
     args = parser.parse_args()
-    if args.gmr_conv_size_list != None:
-        args.gmr_conv_size_list = [int(x) for x in args.gmr_conv_size_list]
-    if isinstance(args.gmr_conv_k, list):
-        args.gmr_conv_k = [int(x) for x in args.gmr_conv_k]
+    if args.ri_conv_size_list != None:
+        args.ri_conv_size_list = [int(x) for x in args.ri_conv_size_list]
+    if isinstance(args.ri_conv_k, list):
+        args.ri_conv_k = [int(x) for x in args.ri_conv_k]
     return args

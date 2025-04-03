@@ -5,12 +5,7 @@ import torchvision.transforms.functional as F
 import numpy as np
 import torchio as tio
 from PIL import Image
-import cv2
 
-def otsu_mask(img):
-    median = np.median(img)
-    _, thresh = cv2.threshold(img, median, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-    return thresh
 
 class DummyToTensor(object):
     def __init__(self):
@@ -174,9 +169,6 @@ def get_mnist_transforms(args):
         transforms.ToTensor(),
         transforms.Normalize((0.1307,), (0.3081,)),
     ]
-    if args.no_underline:
-        transform.pop()
-        test_transform.pop()
     if args.fix_rotate:
         test_transform.append(FixRotate(args.degree, interpolation=args.interpolation))
     if args.vflip:
@@ -199,7 +191,7 @@ def get_mnist_transforms(args):
 
 
 
-def get_modelnet10_transforms(args):
+def get_modelnet_transforms(args):
     target_size = 33 if "se3cnn" in args.model_type else 32
     if args.moco_aug:
         transform = [

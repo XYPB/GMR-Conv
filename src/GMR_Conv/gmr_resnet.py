@@ -213,10 +213,7 @@ class GMR_ResNet(nn.Module):
     Here we only introduce new parameters for GMR_ResNet.
 
     Args:
-        kernel_shape: shape of the GMR convolutional kernel. default: 'o'
-        train_index_mat: if True, train the index matrix. default: False
         gmr_conv_size: size of the GMR convolutional kernel, can be a list of length 4. default: 3
-        deepwise_ri: if True, use deepwise GMR convolution. default: False
         inplanes: number of base channels. default: 64
         layer_stride: per-layer stride for each stage in the ResNet. default: [1, 2, 2, 2]
         num_rings: number of bands in the index matrix. default: None
@@ -234,12 +231,12 @@ class GMR_ResNet(nn.Module):
         replace_stride_with_dilation: Optional[List[bool]] = None,
         norm_layer: Optional[Callable[..., nn.Module]] = None,
         gmr_conv_size: Union[int, list] = 3,
-        deepwise_ri: bool = False,
         inplanes: int = 64,
         layer_stride: Type[Union[int, List[int]]] = [1, 2, 2, 2],
         num_rings: Union[int, list] = None,
         skip_first_maxpool: bool = False,
         sigma_no_weight_decay: bool = False,
+        in_channels: int = 3,
         **kwargs,
     ) -> None:
         super(GMR_ResNet, self).__init__()
@@ -247,7 +244,6 @@ class GMR_ResNet(nn.Module):
             norm_layer = nn.BatchNorm2d
         self._norm_layer = norm_layer
         self.gmr_conv_size = _repeat(gmr_conv_size, 4)
-        self.deepwise_ri = deepwise_ri
         self.num_rings = _repeat(num_rings, 4)
         if isinstance(layer_stride, float):
             layer_stride = [layer_stride for _ in range(4)]
@@ -269,7 +265,7 @@ class GMR_ResNet(nn.Module):
         self.base_width = width_per_group
 
         self.conv1 = GMR_Conv2d(
-            3, self.inplanes, kernel_size=5, stride=1, padding=2, bias=False,
+            in_channels, self.inplanes, kernel_size=5, stride=1, padding=2, bias=False,
             sigma_no_weight_decay=sigma_no_weight_decay,
         )
         self.bn1 = norm_layer(self.inplanes)
@@ -372,7 +368,7 @@ class GMR_ResNet(nn.Module):
             )
 
         layers = []
-        gmr_groups = planes if self.deepwise_ri else 1
+        gmr_groups = 1
         layers.append(
             block(
                 self.inplanes,
@@ -390,7 +386,7 @@ class GMR_ResNet(nn.Module):
             )
         )
         self.inplanes = planes * block.expansion
-        gmr_groups = planes if self.deepwise_ri else 1
+        gmr_groups = 1
         for _ in range(1, blocks):
             layers.append(
                 block(

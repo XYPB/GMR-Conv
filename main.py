@@ -39,7 +39,7 @@ from GMR_Conv.transforms import (
     get_imagenet_transforms,
     get_nct_crc_transforms,
     get_pcam_transforms,
-    get_modelnet10_transforms,
+    get_modelnet_transforms,
 )
 import torchvision.models.resnet as resnet
 import torchvision.models.video.resnet as resnet_3d
@@ -52,7 +52,7 @@ from datasets.mtarsi import MTARSI
 from datasets.nct_crc import NCT_CRC
 from datasets.imagenet_val import ImageNetVal
 from datasets.pcam import PatchCamelyon
-from datasets.modelnet10 import ModelNet10
+from datasets.modelnet import MyModelNet
 from utils import (
     log_img,
     manual_seed,
@@ -131,13 +131,6 @@ def train(
             print(
                 f"Train Epoch: {epoch} [{batch_idx}/{len(train_loader)} ({100. * batch_idx / len(train_loader):.0f}%)]\tLoss: {loss.item():.6f}\tAvg. Loss: {np.mean(step_losses):.6f}\tTime: {time.time()-st:.2f}"
             )
-            if log_dir and args.log_img and epoch == 1:
-                if data.shape[1] == 3:
-                    img = data[0, :].detach().cpu().numpy()
-                else:
-                    img = data[0, 0].detach().cpu().numpy()
-                img_label = target[0].detach().cpu().numpy()
-                log_img(epoch, batch_idx, img, img_label, train_log_dir)
             if args.dry_run:
                 return step_losses, 0, step_grad_norm
         if logger:
@@ -151,9 +144,6 @@ def train(
     et = time.time()
     outputs = np.concatenate(outputs, axis=0)
     targets = np.concatenate(targets, axis=0).squeeze()
-    # Simply throw away the dummy class
-    if args.dummy_class > 0:
-        outputs = outputs[:, : -args.dummy_class]
     if args.multi_label:
         preds = (outputs > 0.5).astype(int)
         acc_top5 = 0.0
@@ -222,14 +212,6 @@ def test(
                 output = output.detach().float()
             else:
                 output = output.detach()
-            if args.log_img and epoch == 1 and batch_idx % 10 == 0:
-                os.makedirs("./tmp/vis_test", exist_ok=True)
-                if data.shape[1] == 3:
-                    img = data[0, :].detach().cpu().numpy()
-                else:
-                    img = data[0, 0].detach().cpu().numpy()
-                img_label = target[0].detach().cpu().numpy()
-                log_img(0, batch_idx, img, img_label, "./tmp/vis_test")
             outputs.append(output.cpu().numpy())
             targets.append(target.detach().cpu().numpy())
     et = time.time()
@@ -237,9 +219,6 @@ def test(
     test_loss /= len(test_loader.dataset)
     outputs = np.concatenate(outputs, axis=0)
     targets = np.concatenate(targets, axis=0).squeeze()
-    # Simply throw away the dummy class
-    if args.dummy_class > 0:
-        outputs = outputs[:, : -args.dummy_class]
     if args.multi_label:
         preds = (outputs > 0.5).astype(int)
         acc_top5 = 0.0
@@ -301,8 +280,8 @@ def eval_rot(model, test_loader, device, args, verbose=False, eval_3d=False):
                 _, test_transform = get_nct_crc_transforms(args)
             elif args.pcam:
                 _, test_transform = get_pcam_transforms(args)
-            elif args.modelnet10:
-                _, test_transform = get_modelnet10_transforms(args)
+            elif args.modelnet10 or args.modelnet40:
+                _, test_transform = get_modelnet_transforms(args)
             else:
                 _, test_transform = get_mnist_transforms(args)
             # hack to test rotation
@@ -342,8 +321,8 @@ def eval_flip(model, test_loader, device, args, verbose=False, eval_3d=False):
             _, test_transform = get_nct_crc_transforms(args)
         elif args.pcam:
             _, test_transform = get_pcam_transforms(args)
-        elif args.modelnet10:
-            _, test_transform = get_modelnet10_transforms(args)
+        elif args.modelnet10 or args.modelnet40:
+            _, test_transform = get_modelnet_transforms(args)
         else:
             _, test_transform = get_mnist_transforms(args)
         # hack to test rotation
@@ -398,6 +377,10 @@ def main_worker(rank, world_size, args):
             task_name = "nct_crc"
         elif args.pcam:
             task_name = "pcam"
+        elif args.modelnet10:
+            task_name = "modelnet10"
+        elif args.modelnet40:
+            task_name = "modelnet40"
         else:
             task_name = "mnist"
         log_dir = os.path.join(
@@ -458,6 +441,16 @@ def main_worker(rank, world_size, args):
         )
         n_classes = 10
         input_shape = (in_channels, 32, 32)
+    elif args.cifar100:
+        transform, test_transform = get_cifar10_transforms(args)
+        train_dataset = torchvision.datasets.CIFAR100(
+            root="./data", train=True, download=True, transform=transform
+        )
+        test_dataset = torchvision.datasets.CIFAR100(
+            root="./data", train=False, download=True, transform=test_transform
+        )
+        n_classes = 100
+        input_shape = (in_channels, 32, 32)
     elif args.vhr10:
         transform, test_transform = get_vhr10_transforms(args)
         train_dataset = VHR10(
@@ -488,16 +481,6 @@ def main_worker(rank, world_size, args):
         )
         n_classes = 20
         input_shape = (in_channels, 64, 64)
-    elif args.cifar100:
-        transform, test_transform = get_cifar10_transforms(args)
-        train_dataset = torchvision.datasets.CIFAR100(
-            root="./data", train=True, download=True, transform=transform
-        )
-        test_dataset = torchvision.datasets.CIFAR100(
-            root="./data", train=False, download=True, transform=test_transform
-        )
-        n_classes = 100
-        input_shape = (in_channels, 32, 32)
     elif args.imagenet:
         transform, test_transform = get_imagenet_transforms(args)
         train_dataset = torchvision.datasets.ImageFolder(
@@ -533,10 +516,17 @@ def main_worker(rank, world_size, args):
         input_shape = (in_channels, 96, 96)
     elif args.modelnet10:
         in_channels = 1
-        transform, test_transform = get_modelnet10_transforms(args)
-        train_dataset = ModelNet10(train=True, transform=transform)
-        test_dataset = ModelNet10(train=False, transform=test_transform)
+        transform, test_transform = get_modelnet_transforms(args)
+        train_dataset = MyModelNet(name="10", train=True, transform=transform)
+        test_dataset = MyModelNet(name="10", train=False, transform=test_transform)
         n_classes = 10
+        input_shape = (in_channels, 33, 33, 33)
+    elif args.modelnet40:
+        in_channels = 1
+        transform, test_transform = get_modelnet_transforms(args)
+        train_dataset = MyModelNet(name="40", train=True, transform=transform)
+        test_dataset = MyModelNet(name="40", train=False, transform=test_transform)
+        n_classes = 40
         input_shape = (in_channels, 33, 33, 33)
     else:
         transform, test_transform = get_mnist_transforms(args)
@@ -547,58 +537,45 @@ def main_worker(rank, world_size, args):
         input_shape = (in_channels, 32, 32)
 
     ####### MODEL #######
-    # add dummy class trick
-
-    if args.modelnet10:
+    if args.modelnet10 or args.modelnet40:
         if "gmr" in args.model_type:
-            if args.ri_conv_size_list != None:
-                ri_conv_size = args.ri_conv_size_list
+            if args.gmr_conv_size_list != None:
+                gmr_conv_size = args.gmr_conv_size_list
             else:
-                ri_conv_size = args.ri_conv_size
+                gmr_conv_size = args.gmr_conv_size
             model = getattr(gmr_resnet_3d, args.model_type)(
                 num_classes=n_classes,
                 in_channels=in_channels,
                 in_planes=args.res_inplanes,
-                ri_conv_size=ri_conv_size,
-                ri_k=args.ri_conv_k,
-                force_circular=args.force_circular,
-                gaussian_mixture_ring=args.gaussian_kernel,
-                train_gaussian_sigma=args.train_gaussian_sigma,
+                gmr_conv_size=gmr_conv_size,
+                num_rings=args.num_rings,
             )
         else:
-            model = getattr(resnet_3d, args.model_type)(
+            model = getattr(resnet_3d, "r3d_18")(
                 num_classes=n_classes,
                 in_channels=in_channels,
                 in_planes=args.res_inplanes,
             )
-    elif args.res_model:
-        if args.ri_conv_size_list != None:
-            ri_conv_size = args.ri_conv_size_list
+    else:
+        if args.gmr_conv_size_list != None:
+            gmr_conv_size = args.gmr_conv_size_list
         else:
-            ri_conv_size = args.ri_conv_size
-        model = getattr(gmr_resnet, args.model_type)(
-            num_classes=n_classes,
-            kernel_shape=args.ri_shape,
-            train_index_mat=args.train_index_mat,
-            inplanes=args.res_inplanes,
-            ri_conv_size=ri_conv_size,
-            deepwise_ri=args.deepwise_ri,
-            ri_index_mat_cin=args.index_mat_cin,
-            ri_index_mat_cout=args.index_mat_cout,
-            ri_split_ratio=args.ri_split_ratio,
-            large_conv=args.large_conv,
-            ri_k=args.ri_conv_k,
-            in_channels=in_channels,
-            layer_idx=args.layer_idx,
-            force_circular=args.force_circular,
-            gaussian_mixture_ring=args.gaussian_kernel,
-            train_gaussian_sigma=args.train_gaussian_sigma,
-            gaussian_sigma_scale=args.gaussian_sigma_scale,
-            full_gaussian_sigma=args.full_gaussian_sigma,
-            dw_fwd=args.dw_fwd,
-            groups=args.groups,
-            frequency_cutoff=args.frequency_cutoff,
-        )
+            gmr_conv_size = args.gmr_conv_size
+        if "gmr" in args.model_type:
+            model = getattr(gmr_resnet, args.model_type)(
+                num_classes=n_classes,
+                inplanes=args.res_inplanes,
+                gmr_conv_size=gmr_conv_size,
+                num_rings=args.num_rings,
+                in_channels=in_channels,
+            )
+        else:
+            # You may need to modify the resnet model to accept 1 channel input
+            model = getattr(resnet, args.model_type)(
+                num_classes=n_classes,
+                inplanes=args.res_inplanes,
+                in_channels=in_channels,
+            )
         # remove the first downsampling to ensure last stage input size
         if args.res_keep_conv1:
             if "gmr" in args.model_type:
@@ -609,14 +586,6 @@ def main_worker(rank, world_size, args):
                     stride=1,
                     padding=2,
                     bias=False,
-                    kernel_shape=args.ri_shape,
-                    train_index_mat=args.train_index_mat,
-                    force_circular=args.force_circular,
-                    gaussian_mixture_ring=args.gaussian_kernel,
-                    train_gaussian_sigma=args.train_gaussian_sigma,
-                    gaussian_sigma_scale=args.gaussian_sigma_scale,
-                    full_gaussian_sigma=args.full_gaussian_sigma,
-                    dw_fwd=args.dw_fwd,
                 )
             else:
                 model.conv1 = nn.Conv2d(
@@ -627,13 +596,6 @@ def main_worker(rank, world_size, args):
                     padding=2,
                     bias=False,
                 )
-                
-        model.maxpool = nn.Identity()
-    else:
-        raise NotImplementedError
-
-    if args.maxpool:
-        model.avgpool = nn.AdaptiveMaxPool2d((1, 1))
 
     if args.dev:
         print(model)
@@ -656,16 +618,15 @@ def main_worker(rank, world_size, args):
         [param.numel() for param in model.parameters() if param.requires_grad]
     )
     print(f"Correct Total params: {param_cnt}")
-    if args.sigma_no_decay:
-        params = [
-            param for name, param in model.named_parameters() if "sigmas" not in name
-        ]
-        sigma_params = [
-            param for name, param in model.named_parameters() if "sigmas" in name
-        ]
-        param_group = [{"params": sigma_params, "weight_decay": 0}, {"params": params}]
-    else:
-        param_group = [{"params": model.parameters()}]
+    
+    # Make the sigma values not to be regularized by weight decay
+    params = [
+        param for name, param in model.named_parameters() if "sigmas" not in name
+    ]
+    sigma_params = [
+        param for name, param in model.named_parameters() if "sigmas" in name
+    ]
+    param_group = [{"params": sigma_params, "weight_decay": 0}, {"params": params}]
 
     if args.adam:
         optimizer = optim.Adam(param_group, lr=args.lr, weight_decay=args.weight_decay)
@@ -680,8 +641,6 @@ def main_worker(rank, world_size, args):
         optimizer = optim.AdamW(param_group, lr=args.lr, weight_decay=args.weight_decay)
     else:
         optimizer = optim.Adadelta(param_group, lr=args.lr)
-
-    torch.autograd.set_detect_anomaly(True)
 
     cur_ep = 1
     if args.resume:
@@ -876,7 +835,7 @@ def main_worker(rank, world_size, args):
         gc.collect()
 
         verbose = epoch == args.epochs
-        eval_3d = (args.med_mnist != None and "3d" in args.med_mnist) or args.modelnet10
+        eval_3d = (args.med_mnist != None and "3d" in args.med_mnist) or args.modelnet10 or args.modelnet40
         if args.eval_rot and (epoch % args.eval_interval == 0 or epoch == args.epochs):
             # don't change the original args
             rot_acc = eval_rot(

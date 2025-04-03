@@ -1,3 +1,4 @@
+import os
 from collections import Counter
 import math
 import torch
@@ -5,6 +6,7 @@ import torch.utils
 import torch.utils.data
 import torch_geometric.transforms as T
 from torch_geometric.datasets import ModelNet
+from tqdm import tqdm
 
 
 def point_cloud_to_voxels(data, resolution=32):
@@ -36,10 +38,11 @@ def point_cloud_to_voxels(data, resolution=32):
     return data
 
 
-class ModelNet10(torch.utils.data.Dataset):
+class MyModelNet(torch.utils.data.Dataset):
     
     def __init__(
         self,
+        name="10",
         root="./data",
         train=True,
         transform=None,
@@ -48,13 +51,16 @@ class ModelNet10(torch.utils.data.Dataset):
             T.NormalizeScale(),
             T.SamplePoints(2048)
         ])
-        self.data = ModelNet(root, name="10", train=train, transform=pre_process)
+        root = os.path.join(root, "ModelNet" + name)
+        if not os.path.exists(root):
+            os.makedirs(root)
+        self.data = ModelNet(root, name=name, train=train, transform=pre_process)
         self.transform = transform
         
         self.voxels = []
         self.labels = []
         print("Converting point clouds to voxels...")
-        for i in range(len(self.data)):
+        for i in tqdm(range(len(self.data))):
             pc = self.data.__getitem__(i)
             self.voxels.append(point_cloud_to_voxels(pc).voxels)
             self.labels.append(pc.y)

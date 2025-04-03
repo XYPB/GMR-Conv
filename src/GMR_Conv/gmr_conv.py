@@ -622,9 +622,7 @@ class GMR_Conv2d(_GMR_ConvNd):
 
         weight_index_mat = weight_index_mat.reshape(
             -1, self.kernel_size[0], self.kernel_size[0]
-        )[
-            :, None
-        ]  # b, 1, k, k
+        )[:, None]  # b, 1, k, k
         B, Cin, H, W = input.shape
         input = input.reshape(B * Cin, 1, H, W)
         output1 = F.conv2d(
