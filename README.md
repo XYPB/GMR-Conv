@@ -57,7 +57,7 @@ y = gmr_conv(x)
 x_rot = torch.rot90(x, 1, (2, 3))
 y_rot = gmr_conv(x_rot)
 # check equivariance under 90-degree rotation
-print(torch.allclose(torch.rot90(y, 1, (2, 3)), y_rot, atol=1e-7))
+print(torch.allclose(torch.rot90(y, 1, (2, 3)), y_rot, atol=1e-6))
 ```
 
 For more detail about the specific argument for our GMR-Conv, please refer to [here](https://github.com/XYPB/GMR-Conv/blob/0f0cc8a15a1647688a478ff0864998624c13e98c/src/GMR_Conv/gmr_conv.py#L51-L72).
