@@ -1,7 +1,7 @@
 import torch.nn as nn
 from .gmr_conv import GMR_Conv2d
 
-def convert_to_GMR_conv(model, kernel_shape='o', train_index_mat=False, gmr_conv_size=None, gmr_groups=None, num_rings=None, force_circular=False):
+def convert_to_gmr_conv(model, kernel_shape='o', train_index_mat=False, gmr_conv_size=None, gmr_groups=None, num_rings=None, force_circular=False):
     '''
     Recursively replace Conv layers to GMR_Conv layers.
     If convolutional layer with stride >= 2 found, add AvgPool2d before it.

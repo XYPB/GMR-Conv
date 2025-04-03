@@ -631,6 +631,7 @@ class GMR_Conv2d(_GMR_ConvNd):
         weight = self.weight.reshape(
             self.out_channels, self.in_channels * self.num_rings, 1, 1
         )  # Cout, Cin*b, 1, 1
+        H, W = output1.shape[2:]
         output2 = F.conv2d(
             output1.reshape(B, Cin * self.num_rings, H, W),
             weight,

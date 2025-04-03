@@ -210,14 +210,27 @@ class GMRBottleneck(nn.Module):
 
 class GMR_ResNet(nn.Module):
     """
-    Here we only introduce new parameters for GMR_ResNet.
-
+    GMR_ResNet implements a ResNet architecture with Gaussian Mixture Ring convolutional layers.
+    
     Args:
-        gmr_conv_size: size of the GMR convolutional kernel, can be a list of length 4. default: 3
-        inplanes: number of base channels. default: 64
-        layer_stride: per-layer stride for each stage in the ResNet. default: [1, 2, 2, 2]
-        num_rings: number of bands in the index matrix. default: None
-        skip_first_maxpool: if True, skip the first maxpool layer, set True when processing small images. default: False
+        block (Type[Union[GMRBasicBlock, GMRBottleneck]]): The block type to use throughout the network 
+            (either GMRBasicBlock or GMRBottleneck)
+        layers (List[int]): Number of blocks in each of the four layers of the network
+        num_classes (int): Number of output classes. Default: 1000
+        zero_init_residual (bool): If True, zero-initialize the last BN in each residual branch. Default: False
+        groups (int): Number of groups for the GroupedConv. Default: 1
+        width_per_group (int): Width of each group in the GroupedConv. Default: 64
+        replace_stride_with_dilation (Optional[List[bool]]): Replace stride with dilation in each layer. Default: None
+        norm_layer (Optional[Callable[..., nn.Module]]): Normalization layer. Default: None (BatchNorm2d)
+        gmr_conv_size (Union[int, list]): Size of the GMR convolutional kernel, can be a list of length 4 
+            to specify different sizes for each layer. Default: 3
+        inplanes (int): Number of base channels in the network. Default: 64
+        layer_stride (Type[Union[int, List[int]]]): Stride for each layer. Default: [1, 2, 2, 2]
+        num_rings (Union[int, list]): Number of rings in the GMR kernel, can be a list to specify 
+            different values for each layer. Default: None (automatically determined)
+        skip_first_maxpool (bool): If True, skip the first maxpool layer, useful for small images. Default: False
+        sigma_no_weight_decay (bool): If True, exclude sigma parameters from weight decay. Default: False
+        in_channels (int): Number of input channels. Default: 3
     """
 
     def __init__(
@@ -272,9 +285,9 @@ class GMR_ResNet(nn.Module):
         self.relu = nn.ReLU(inplace=True)
 
         if skip_first_maxpool:
-            self.maxpool = nn.Identity()
+            self.first_avgpool = nn.Identity()
         else:
-            self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+            self.first_avgpool = nn.AvgPool2d(kernel_size=2, stride=2)
 
         self.layer1 = self._make_layer(
             block,
@@ -410,7 +423,7 @@ class GMR_ResNet(nn.Module):
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
-        x = self.maxpool(x)
+        x = self.first_avgpool(x)
 
         x = self.layer1(x)
         x = self.layer2(x)

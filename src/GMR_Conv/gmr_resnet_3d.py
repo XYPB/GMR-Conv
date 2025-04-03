@@ -13,7 +13,7 @@ from .gmr_conv import GMR_Conv2d, GMR_Conv3d
 from .gmr_resnet import _repeat
 
 __all__ = [
-    "VideoResNet",
+    "GMRVideoResNet",
     "R3D_18_Weights",
     "r3d_18",
     "gmr_r3d_18",
@@ -323,7 +323,7 @@ class GMRBasicStem(nn.Sequential):
         )
 
 
-class VideoResNet(nn.Module):
+class GMRVideoResNet(nn.Module):
     def __init__(
         self,
         block: Type[Union[BasicBlock, GMRBasicBlock, Bottleneck]],
@@ -338,16 +338,21 @@ class VideoResNet(nn.Module):
         gmr_conv_size: Union[int, list] = 3,
         num_rings: Union[int, list] = None,
     ) -> None:
-        """Generic resnet video generator.
+        """Generic GMR-based resnet video generator.
 
         Args:
-            block (Type[Union[BasicBlock, Bottleneck]]): resnet building block
-            conv_makers (List[Type[Union[Conv3DSimple,]]]): generator
+            block (Type[Union[BasicBlock, GMRBasicBlock, Bottleneck]]): resnet building block
+            conv_makers (Sequence[Type[Union[Conv3DSimple, GMRConv3D]]]): generator
                 function for each layer
             layers (List[int]): number of blocks per layer
-            stem (Callable[..., nn.Module]): module specifying the ResNet stem.
+            stem (Callable[..., nn.Module]): module specifying the ResNet stem
             num_classes (int, optional): Dimension of the final FC layer. Defaults to 400.
             zero_init_residual (bool, optional): Zero init bottleneck residual BN. Defaults to False.
+            in_channels (int, optional): Number of input channels. Defaults to 3.
+            gmr_conv_size (Union[int, list], optional): Size of GMR convolution kernels. 
+                Can be an int for same size across all layers or a list for different sizes. Defaults to 3.
+            num_rings (Union[int, list], optional): Number of rings for GMR convolutions.
+                Can be an int for same number across all layers or a list for different numbers. Defaults to None.
         """
         super().__init__()
         self.inplanes = 64
@@ -497,20 +502,36 @@ def _video_resnet(
     weights: Optional[WeightsEnum],
     progress: bool,
     **kwargs: Any,
-) -> VideoResNet:
+) -> GMRVideoResNet:
     if weights is not None:
         _ovewrite_named_param(kwargs, "num_classes", len(weights.meta["categories"]))
 
-    model = VideoResNet(block, conv_makers, layers, stem, **kwargs)
+    model = GMRVideoResNet(block, conv_makers, layers, stem, **kwargs)
 
     if weights is not None:
         model.load_state_dict(weights.get_state_dict(progress=progress))
 
     return model
 
+def gmr_r3d_9(*, progress: bool = True, **kwargs: Any) -> GMRVideoResNet:
+    """Construct GMR 18 layer Resnet3D model.
 
+    .. betastatus:: video module
 
-def gmr_r3d_18(*, progress: bool = True, **kwargs: Any) -> VideoResNet:
+    .. autoclass:: torchvision.models.video.R3D_18_Weights
+        :members:
+    """
+    return _video_resnet(
+        GMRBasicBlock,
+        [GMRConv3D] * 4,
+        [1, 1, 1, 1],
+        GMRBasicStem,
+        None,
+        progress,
+        **kwargs,
+    )
+
+def gmr_r3d_18(*, progress: bool = True, **kwargs: Any) -> GMRVideoResNet:
     """Construct GMR 18 layer Resnet3D model.
 
     .. betastatus:: video module

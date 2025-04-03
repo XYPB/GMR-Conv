@@ -54,7 +54,6 @@ from datasets.imagenet_val import ImageNetVal
 from datasets.pcam import PatchCamelyon
 from datasets.modelnet import MyModelNet
 from utils import (
-    log_img,
     manual_seed,
     one_hot,
     log_train_val,
@@ -862,7 +861,7 @@ def main_worker(rank, world_size, args):
             )
             total_eval_flip_acc.append(flip_acc)
             if logger:
-                logger.log({"test/eval_flip_acc": rot_acc})
+                logger.log({"test/eval_flip_acc": flip_acc})
 
     if rank == 0 and args.log:
         with open(os.path.join(log_dir, "logs.json"), "w") as f:
