@@ -1,6 +1,6 @@
 # GMR-Conv: An Efficient Rotation and Reflection Equivariant Convolution Kernel Using Gaussian Mixture Rings
 
-[![PyPI version](https://img.shields.io/pypi/v/GMR-Conv.svg)](https://pypi.org/project/GMR-Conv/) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+[![PyPI version](https://img.shields.io/pypi/v/GMR-Conv.svg)](https://pypi.org/project/GMR-Conv/) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE) [![arXiv:2504.02819](https://img.shields.io/badge/arXiv-2504.02819-B31B1B.svg)](https://arxiv.org/abs/2504.02819)
 
 This is the official implementation of paper "GMR-Conv: An Efficient Rotation and Reflection Equivariant Convolution Kernel Using Gaussian Mixture Rings". It is also a following up of our previous research [SRE-Conv](https://github.com/XYPB/SRE-Conv).
 
@@ -14,7 +14,7 @@ For any question related to the implementation, please open issue in this repo, 
 
 ## News
 
-- **April. 2025** The code and PyPi package is officially released!
+- **April. 2025** The code and PyPi package is officially released! The pre-print is also available on [arXiv](https://arxiv.org/abs/2504.02819) now.
 
 ## Abstract
 
