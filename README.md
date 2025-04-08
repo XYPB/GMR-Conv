@@ -340,5 +340,10 @@ For more details about the training arguments, please see `opt.py`.
 ## Reference
 
 ```
-TBD
+@article{du2025gmr,
+    title={GMR-Conv: An Efficient Rotation and Reflection Equivariant Convolution Kernel Using Gaussian Mixture Rings},
+    author={Du, Yuexi and Zhang, Jiazhen and Dvornek, Nicha C and Onofrey, John A},
+    journal={arXiv preprint arXiv:2504.02819},
+    year={2025}
+}
 ```
