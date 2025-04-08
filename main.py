@@ -32,20 +32,24 @@ from sklearn.metrics import (
 import gc
 
 from opt import get_opt
-from GMR_Conv.transforms import (
-    get_mnist_transforms,
-    get_cifar10_transforms,
-    get_vhr10_transforms,
-    get_imagenet_transforms,
-    get_nct_crc_transforms,
-    get_pcam_transforms,
-    get_modelnet_transforms,
-)
 import torchvision.models.resnet as resnet
 import torchvision.models.video.resnet as resnet_3d
-import GMR_Conv.gmr_resnet as gmr_resnet
-import GMR_Conv.gmr_resnet_3d as gmr_resnet_3d
-from GMR_Conv.gmr_conv import GMR_Conv2d
+try:
+    import GMR_Conv.gmr_resnet as gmr_resnet
+    import GMR_Conv.gmr_resnet_3d as gmr_resnet_3d
+    from GMR_Conv.gmr_conv import GMR_Conv2d
+    from GMR_Conv.transforms import (
+        get_mnist_transforms,
+        get_cifar10_transforms,
+        get_vhr10_transforms,
+        get_imagenet_transforms,
+        get_nct_crc_transforms,
+        get_pcam_transforms,
+        get_modelnet_transforms,
+    )
+except ImportError as e:
+    print("Please install GMR_Conv with 'pip install GMR-Conv' first.")
+    raise e
 from datasets.mnist import MNIST
 from datasets.vhr10 import VHR10
 from datasets.mtarsi import MTARSI
