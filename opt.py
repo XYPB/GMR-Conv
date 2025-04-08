@@ -171,6 +171,15 @@ parser.add_argument("--load-model", type=str, default="", help="load pre-trained
 parser.add_argument(
     "--resume", type=str, default="", help="resume from previous training"
 )
+parser.add_argument(
+    "---multi-label", action="store_true", default=False, help="multi-label classification"
+)
+parser.add_argument(
+    "--print-confusion-matrix",
+    action="store_true",
+    default=False,
+    help="print confusion matrix during evaluation",
+)
 
 
 # Augmentation
@@ -408,8 +417,8 @@ parser.add_argument(
 
 def get_opt():
     args = parser.parse_args()
-    if args.ri_conv_size_list != None:
-        args.ri_conv_size_list = [int(x) for x in args.ri_conv_size_list]
-    if isinstance(args.ri_conv_k, list):
-        args.ri_conv_k = [int(x) for x in args.ri_conv_k]
+    if args.gmr_conv_size_list != None:
+        args.gmr_conv_size_list = [int(x) for x in args.gmr_conv_size_list]
+    if isinstance(args.num_rings, list):
+        args.num_rings = [int(x) for x in args.num_rings]
     return args

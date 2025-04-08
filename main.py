@@ -744,21 +744,13 @@ def main_worker(rank, world_size, args):
                 log_dir,
                 logger,
             )
-            confusion_mat = (
-                args.utp
-                or args.embed
-                or args.balance_embed
-                or args.embed_density
-                or args.roi_screen_embed
-                or args.pcam
-            )
             test_loss, test_acc = test(
                 args,
                 model,
                 device,
                 test_loader,
                 epoch=epoch,
-                confusion_mat=confusion_mat,
+                confusion_mat=args.print_confusion_matrix,
                 logger=logger,
             )
             steps = len(step_losses)
@@ -834,7 +826,7 @@ def main_worker(rank, world_size, args):
         gc.collect()
 
         verbose = epoch == args.epochs
-        eval_3d = (args.med_mnist != None and "3d" in args.med_mnist) or args.modelnet10 or args.modelnet40
+        eval_3d = args.modelnet10 or args.modelnet40
         if args.eval_rot and (epoch % args.eval_interval == 0 or epoch == args.epochs):
             # don't change the original args
             rot_acc = eval_rot(
