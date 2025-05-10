@@ -626,7 +626,7 @@ class GMR_Conv2d(_GMR_ConvNd):
         B, Cin, H, W = input.shape
         input = input.reshape(B * Cin, 1, H, W)
         output1 = F.conv2d(
-            input, weight_index_mat, None, 1, self.padding, 1, 1
+            input, weight_index_mat, None, 1, self.padding, self.dilation, 1
         )  # (B*Cin, b, H, W)
         weight = self.weight.reshape(
             self.out_channels, self.in_channels * self.num_rings, 1, 1
