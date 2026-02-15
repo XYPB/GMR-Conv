@@ -14,6 +14,7 @@ For any question related to the implementation, please open issue in this repo, 
 
 ## News
 
+- **Mar. 2025** We have released an important fix for the GMR behavior when training with natural images. Please update to the latest version (>=1.0.3) of `GMR-Conv` package to get this fix.
 - **April. 2025** The code and PyPi package is officially released! The pre-print is also available on [arXiv](https://arxiv.org/abs/2504.02819) now.
 
 ## Abstract
