@@ -2,7 +2,7 @@
 
 [![PyPI version](https://img.shields.io/pypi/v/GMR-Conv.svg)](https://pypi.org/project/GMR-Conv/) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE) [![arXiv:2504.02819](https://img.shields.io/badge/arXiv-2504.02819-B31B1B.svg)](https://arxiv.org/abs/2504.02819)
 
-This is the official implementation of paper "GMR-Conv: An Efficient Rotation and Reflection Equivariant Convolution Kernel Using Gaussian Mixture Rings". It is also a following up of our previous research [SRE-Conv](https://github.com/XYPB/SRE-Conv).
+This is the official implementation of the paper "GMR-Conv: An Efficient Rotation and Reflection Equivariant Convolution Kernel Using Gaussian Mixture Rings". It is also a following up of our previous research [SRE-Conv](https://github.com/XYPB/SRE-Conv).
 
 *[Yuexi Du](https://xypb.github.io/), Jiazhen Zhang, [Nicha C. Dvornek](https://www.hellonicha.com/), [John A. Onofrey](https://medicine.yale.edu/profile/john-onofrey/)*
 
@@ -10,12 +10,12 @@ This is the official implementation of paper "GMR-Conv: An Efficient Rotation an
 
 ![teaser](assets/teaser_stats_wide1.png)
 
-For any question related to the implementation, please open issue in this repo, we will respond to you ASAP. For other question about the paper, please contact the author directly.
+For any questions related to the implementation, please open an issue in this repo, and we will respond to you ASAP. For other questions about the paper, please contact the author directly.
 
 ## News
 
-- **Mar. 2025** We have released an important fix for the GMR behavior when training with natural images. Please update to the latest version (>=1.0.3) of `GMR-Conv` package to get this fix.
-- **April. 2025** The code and PyPi package is officially released! The pre-print is also available on [arXiv](https://arxiv.org/abs/2504.02819) now.
+- **Feb. 2026** **[Important]** We have released an important fix for the GMR behavior when training with natural images. Please update to the latest version (>=1.0.3) of `GMR-Conv` package to get this fix.
+- **April. 2025** The code and PyPi package are officially released! The pre-print is also available on [arXiv](https://arxiv.org/abs/2504.02819) now.
 
 ## Abstract
 
@@ -41,11 +41,11 @@ The minimal requirement for the `GMR-Conv` package is:
 ```
 These packages will be installed automatically when installing the `GMR-Conv`.
 
-**Note**: Using lower version of torch and numpy should be fine given that we didn't use any new feature in the new torch version, but we do suggest you to follow the required dependencies. If you have to use the different version of torch/numpy, you may also try to install the package from source code at [project repo](https://github.com/XYPB/GMR-Conv).
+**Note**: Using a lower version of torch and numpy should be fine, given that we didn't use any new feature in the new torch version, but we do suggest you follow the required dependencies. If you have to use a different version of torch/numpy, you may also try to install the package from source code at [project repo](https://github.com/XYPB/GMR-Conv).
 
 ## Usage
 
-Our GMR-Conv is implemented with the same interface as conventional torch convolutional layer. It can be used easily in any modern deep learning CNN implemented in PyTorch.
+Our GMR-Conv is implemented with the same interface as a conventional torch convolutional layer. It can be used easily in any modern deep learning CNN implemented in PyTorch.
 
 ```python
 import torch
