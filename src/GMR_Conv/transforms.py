@@ -264,9 +264,8 @@ def get_cifar10_transforms(args):
         transforms.ToTensor(),
         transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
     ]
-    if args.res_model or args.cn_model:
-        transform = [transforms.Resize((32, 32))] + transform
-        test_transform = [transforms.Resize((32, 32))] + test_transform
+    transform = [transforms.Resize((32, 32))] + transform
+    test_transform = [transforms.Resize((32, 32))] + test_transform
     if args.fix_rotate:
         test_transform.append(
             PadTransWrapper(
@@ -392,9 +391,8 @@ def get_imagenet_transforms(args):
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
     ]
-    if args.res_model or args.cn_model or args.e2_model:
-        transform = [transforms.Resize((args.img_size, args.img_size))] + transform
-        test_transform = [transforms.Resize((args.img_size, args.img_size))] + test_transform
+    transform = [transforms.Resize((args.img_size, args.img_size))] + transform
+    test_transform = [transforms.Resize((args.img_size, args.img_size))] + test_transform
     if args.fix_rotate:
         test_transform.append(
             PadTransWrapper(
