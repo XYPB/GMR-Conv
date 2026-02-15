@@ -603,7 +603,7 @@ def main_worker(rank, world_size, args):
     if args.dev:
         print(model)
 
-    elif args.ddp:
+    if args.ddp:
         train_sampler = torch.utils.data.distributed.DistributedSampler(
             train_dataset, num_replicas=world_size, rank=rank
         )

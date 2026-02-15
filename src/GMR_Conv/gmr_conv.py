@@ -95,7 +95,7 @@ class _GMR_ConvNd(nn.Module):
         bias: bool = True,
         padding_mode: str = "zeros",
         num_rings: int = None,
-        train_index_mat: bool = True,
+        train_index_mat: bool = False,
         inference_accelerate: bool = True,
         force_circular: bool = True,
         gaussian_mixture_ring: bool = True,
