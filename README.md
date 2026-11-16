@@ -36,6 +36,8 @@ The minimal requirement for the `GMR-Conv` package is:
 "scipy>=1.9.0",
 "numpy>=1.22.0",
 "torch>=1.8.0",
+"torchvision",
+"torchio",
 "pillow>=9.2.0",
 "monai>=0.7.0", # for UNet implementation
 ```
