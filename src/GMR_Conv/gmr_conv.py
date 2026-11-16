@@ -371,6 +371,7 @@ class GMR_Conv1d(_GMR_ConvNd):
         dw_fwd (bool, optional): If True, use depthwise-like efficient forward. Default: True.
         device (optional): Device to use for computation. Default: None.
         dtype (optional): Data type to use for computation. Default: None.
+        clip_sigma (bool, keyword-only): If True, clip the Gaussian sigma. Default: True.
         **kwargs: Additional arguments.
     Methods:
         _make_weight_index_mat(index_mat_C_in, index_mat_C_out, factory_kwargs):
@@ -404,6 +405,8 @@ class GMR_Conv1d(_GMR_ConvNd):
         dw_fwd: bool = True,
         device=None,
         dtype=None,
+        *,
+        clip_sigma: bool = True,
         **kwargs,
     ) -> None:
         factory_kwargs = {"device": device, "dtype": dtype}
@@ -412,25 +415,26 @@ class GMR_Conv1d(_GMR_ConvNd):
         dilation = _single(dilation)
         padding = padding if isinstance(padding, str) else _single(padding)
         super(GMR_Conv1d, self).__init__(
-            in_channels,
-            out_channels,
-            kernel_size,
-            stride,
-            padding,
-            dilation,
-            transposed,
-            groups,
-            bias,
-            padding_mode,
-            num_rings,
-            train_index_mat,
-            inference_accelerate,
-            force_circular,
-            gaussian_mixture_ring,
-            train_gaussian_sigma,
-            sigma_no_weight_decay,
-            gaussian_sigma_scale,
-            dw_fwd,
+            in_channels=in_channels,
+            out_channels=out_channels,
+            kernel_size=kernel_size,
+            stride=stride,
+            padding=padding,
+            dilation=dilation,
+            transposed=transposed,
+            groups=groups,
+            bias=bias,
+            padding_mode=padding_mode,
+            num_rings=num_rings,
+            train_index_mat=train_index_mat,
+            inference_accelerate=inference_accelerate,
+            force_circular=force_circular,
+            gaussian_mixture_ring=gaussian_mixture_ring,
+            train_gaussian_sigma=train_gaussian_sigma,
+            sigma_no_weight_decay=sigma_no_weight_decay,
+            gaussian_sigma_scale=gaussian_sigma_scale,
+            clip_sigma=clip_sigma,
+            dw_fwd=dw_fwd,
             **factory_kwargs,
         )
 
@@ -450,7 +454,7 @@ class GMR_Conv1d(_GMR_ConvNd):
                 idx = (D == levels[i]).astype(int)
             else:
                 idx = ((D >= levels[i]) & (D < levels[i + 1])).astype(int)
-            level_mat = torch.tensor(idx, **factory_kwargs)[None, None, :, :]
+            level_mat = torch.tensor(idx, **factory_kwargs)[None, None, :]
             weight_index_mats.append(level_mat.reshape(-1))
         weight_index_mats = torch.stack(weight_index_mats, dim=0)
         weight_index_mats = weight_index_mats.to(torch.float32)
@@ -510,6 +514,7 @@ class GMR_Conv2d(_GMR_ConvNd):
         dw_fwd (bool, optional): If True, use depthwise-like efficient forward. Default is True.
         device (optional): Device on which to place the tensor. Default is None.
         dtype (optional): Data type of the tensor. Default is None.
+        clip_sigma (bool, keyword-only): If True, clip the Gaussian sigma. Default is True.
         **kwargs: Additional keyword arguments.
     Methods:
         _make_weight_index_mat(index_mat_C_in, index_mat_C_out, factory_kwargs):
@@ -545,6 +550,8 @@ class GMR_Conv2d(_GMR_ConvNd):
         dw_fwd: bool = True,
         device=None,
         dtype=None,
+        *,
+        clip_sigma: bool = True,
         **kwargs,
     ) -> None:
         factory_kwargs = {"device": device, "dtype": dtype}
@@ -553,25 +560,26 @@ class GMR_Conv2d(_GMR_ConvNd):
         dilation = _pair(dilation)
         padding = padding if isinstance(padding, str) else _pair(padding)
         super(GMR_Conv2d, self).__init__(
-            in_channels,
-            out_channels,
-            kernel_size,
-            stride,
-            padding,
-            dilation,
-            transposed,
-            groups,
-            bias,
-            padding_mode,
-            num_rings,
-            train_index_mat,
-            inference_accelerate,
-            force_circular,
-            gaussian_mixture_ring,
-            train_gaussian_sigma,
-            sigma_no_weight_decay,
-            gaussian_sigma_scale,
-            dw_fwd,
+            in_channels=in_channels,
+            out_channels=out_channels,
+            kernel_size=kernel_size,
+            stride=stride,
+            padding=padding,
+            dilation=dilation,
+            transposed=transposed,
+            groups=groups,
+            bias=bias,
+            padding_mode=padding_mode,
+            num_rings=num_rings,
+            train_index_mat=train_index_mat,
+            inference_accelerate=inference_accelerate,
+            force_circular=force_circular,
+            gaussian_mixture_ring=gaussian_mixture_ring,
+            train_gaussian_sigma=train_gaussian_sigma,
+            sigma_no_weight_decay=sigma_no_weight_decay,
+            gaussian_sigma_scale=gaussian_sigma_scale,
+            clip_sigma=clip_sigma,
+            dw_fwd=dw_fwd,
             **factory_kwargs,
         )
 
@@ -682,6 +690,7 @@ class GMR_Conv3d(_GMR_ConvNd):
         dw_fwd (bool, optional): If True, use depthwise-like efficient forward. Default is True.
         device (optional): Device on which to place the tensor. Default is None.
         dtype (optional): Data type of the tensor. Default is None.
+        clip_sigma (bool, keyword-only): If True, clip the Gaussian sigma. Default is True.
         **kwargs: Additional keyword arguments.
     Methods:
         _make_weight_index_mat(index_mat_C_in, index_mat_C_out, factory_kwargs):
@@ -717,6 +726,8 @@ class GMR_Conv3d(_GMR_ConvNd):
         dw_fwd: bool = True,
         device=None,
         dtype=None,
+        *,
+        clip_sigma: bool = True,
         **kwargs,
     ) -> None:
         factory_kwargs = {"device": device, "dtype": dtype}
@@ -725,25 +736,26 @@ class GMR_Conv3d(_GMR_ConvNd):
         dilation = _triple(dilation)
         padding = padding if isinstance(padding, str) else _triple(padding)
         super(GMR_Conv3d, self).__init__(
-            in_channels,
-            out_channels,
-            kernel_size,
-            stride,
-            padding,
-            dilation,
-            transposed,
-            groups,
-            bias,
-            padding_mode,
-            num_rings,
-            train_index_mat,
-            inference_accelerate,
-            force_circular,
-            gaussian_mixture_ring,
-            train_gaussian_sigma,
-            sigma_no_weight_decay,
-            gaussian_sigma_scale,
-            dw_fwd,
+            in_channels=in_channels,
+            out_channels=out_channels,
+            kernel_size=kernel_size,
+            stride=stride,
+            padding=padding,
+            dilation=dilation,
+            transposed=transposed,
+            groups=groups,
+            bias=bias,
+            padding_mode=padding_mode,
+            num_rings=num_rings,
+            train_index_mat=train_index_mat,
+            inference_accelerate=inference_accelerate,
+            force_circular=force_circular,
+            gaussian_mixture_ring=gaussian_mixture_ring,
+            train_gaussian_sigma=train_gaussian_sigma,
+            sigma_no_weight_decay=sigma_no_weight_decay,
+            gaussian_sigma_scale=gaussian_sigma_scale,
+            clip_sigma=clip_sigma,
+            dw_fwd=dw_fwd,
             **factory_kwargs,
         )
 
@@ -818,6 +830,7 @@ class GMR_ConvTranspose2d(GMR_Conv2d):
         dw_fwd (bool, optional): Depthwise-like efficient forward flag. Default: True.
         device (torch.device, optional): The desired device of the parameters. Default: None.
         dtype (torch.dtype, optional): The desired data type of the parameters. Default: None.
+        clip_sigma (bool, keyword-only): If True, clip the Gaussian sigma. Default: True.
     Methods:
         forward(input, output_size=None):
             Applies the transposed 2D convolution to the input tensor.
@@ -843,6 +856,8 @@ class GMR_ConvTranspose2d(GMR_Conv2d):
         dw_fwd: bool = True,
         device=None,
         dtype=None,
+        *,
+        clip_sigma: bool = True,
     ) -> None:
         if padding_mode != "zeros":
             raise ValueError(
@@ -851,22 +866,27 @@ class GMR_ConvTranspose2d(GMR_Conv2d):
                 )
             )
         super(GMR_ConvTranspose2d, self).__init__(
-            in_channels,
-            out_channels,
-            kernel_size,
-            stride,
-            padding,
-            dilation,
-            groups,
-            bias,
-            padding_mode,
-            num_rings,
-            train_index_mat,
-            inference_accelerate,
-            force_circular,
-            device,
-            dtype,
+            in_channels=in_channels,
+            out_channels=out_channels,
+            kernel_size=kernel_size,
+            stride=stride,
+            padding=padding,
+            dilation=dilation,
+            transposed=True,
+            groups=groups,
+            bias=bias,
+            padding_mode=padding_mode,
+            num_rings=num_rings,
+            train_index_mat=train_index_mat,
+            inference_accelerate=inference_accelerate,
+            force_circular=force_circular,
+            clip_sigma=clip_sigma,
+            dw_fwd=dw_fwd,
+            device=device,
+            dtype=dtype,
         )
+        # Transposed convolution output padding is independent of input padding.
+        self.output_padding = _pair(0)
 
     # dilation being an optional parameter is for backwards
     # compatibility
